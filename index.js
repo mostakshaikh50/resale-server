@@ -22,20 +22,43 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
     try{
         const categoryCollection = client.db('laptopDeals').collection('categories');
+        const productCollection = client.db('laptopDeals').collection('products');
 
-        app.get('/categories', async(req, res) =>{
+        // app.get("/phone", async (req, res) => {
+        //     const query = {}
+        //     const options = await phoneOptionCollection.find(query).toArray()
+        //     res.send(options)
+
+        // })
+
+        // app.get('/phone/:id', async (req, res) => {
+        //     const id = req.params.id
+        //     const query = { category_id: id }
+        //     const result = await phoneOptionCollection.find(query).toArray()
+        //     res.send(result)
+        // })
+
+
+        app.get('/category', async(req, res) =>{
             const query ={}
-            const cursor = categoryCollection.find(query);
-            const categories = await cursor.toArray();
-            res.send(categories);
-           });
+            const category = await categoryCollection.find(query).toArray()
+            res.send(category)
+           });     
+           
+           app.get('/category/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { category_id: id }
+            const result = await productCollection.find(query).toArray()
+            res.send(result)
+        })
 
-           app.get('/categories/:id', async(req, res) =>{
-            const id = req.params.id;
-            const query = {_id: ObjectId(id)};
-            const category = await categoryCollection.findOne(query);
-            res.send(category);
-           });
+        //    app.get('/category/:id', async(req, res) =>{
+        //     const id = req.params.id;
+        //     console.log(id);
+        //     const query = {_id: ObjectId(id)};
+        //     const product = await categoryCollection.findOne(query);
+        //     res.send(product);
+        //    });
     }
     finally{
 
