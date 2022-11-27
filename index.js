@@ -24,6 +24,7 @@ async function run(){
         const categoryCollection = client.db('laptopDeals').collection('categories');
         const productCollection = client.db('laptopDeals').collection('products');
         const bookingsCollection = client.db('laptopDeals').collection('bookings');
+        const usersCollection = client.db('laptopDeals').collection('users');
 
 
         app.get('/category', async(req, res) =>{
@@ -39,11 +40,30 @@ async function run(){
             res.send(result)
         });
 
+        app.get('/bookings', async (req, res) => {
+            const email = req.query.email;
+            //const decodedEmail = req.decoded.email;
+            // if (email != decodedEmail) {
+            //     return res.status(403).send({ message: 'forbidden access' });
+            // }
+            const query = { email: email };
+            const bookings = await bookingsCollection.find(query).toArray();
+            res.send(bookings);
+
+        });
+
         app.post('/bookings', async (req, res) => {
             const booking = req.body
             console.log(booking);
             const result = await bookingsCollection.insertOne(booking)
             res.send(result)
+        });
+
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            console.log(user);
+            const result = await usersCollection.insertOne(user);
+            res.send(result);
         });
         
     }
