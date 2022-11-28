@@ -44,6 +44,7 @@ async function run(){
         const bookingsCollection = client.db('laptopDeals').collection('bookings');
         const usersCollection = client.db('laptopDeals').collection('users');
         const addProductCollection = client.db('laptopDeals').collection('addProduct');
+        const paymentCollection = client.db('laptopDeals').collection('payments');
 
         const verifyAdmin = async (req, res, next) => {
             console.log(req.decoded.email);
@@ -108,6 +109,20 @@ async function run(){
             res.send({ isAdmin: user?.role === 'admin' });
         });
 
+        app.get('/users/buyer/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isBuyer: user?.role === 'Buyer' });
+        });
+        app.get('/users/seller/:email', async (req, res) => {
+            const email = req.params.email;
+            const query = { email };
+            const user = await usersCollection.findOne(query);
+            res.send({ isSeller: user?.role === 'Seller' });
+        });
+
+
         app.get('/jwt', async (req, res) => {
             const email = req.query.email;
             const query = { email: email };
@@ -137,6 +152,51 @@ async function run(){
             const result = await addProductCollection.insertOne(product);
             res.send(result);
         });
+        app.delete('/addproduct/:id', verifyJWT, async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await addProductCollection.deleteOne(filter);
+            res.send(result);
+        });
+
+        app.get('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const booking = await bookingsCollection.findOne(query);
+            res.send(booking);
+        });
+
+        app.post('/create-payment-intent', async(req, res) =>{
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                "payment_method_types" : ["card"]
+
+            });
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+            });
+        });
+
+        app.post('/payments', async(req, res) => {
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = {_id: ObjectId(id)};
+            const updatedDoc = {
+                $set: {
+                    paid: true,
+                    transactionId: payment.transactionId
+                }
+            }
+            const updatedResult = await bookingsCollection.updateOne(filter, updatedDoc)
+            res.send(result);
+        })
+
         
     }
     finally{
