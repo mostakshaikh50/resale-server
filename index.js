@@ -43,6 +43,18 @@ async function run(){
         const productCollection = client.db('laptopDeals').collection('products');
         const bookingsCollection = client.db('laptopDeals').collection('bookings');
         const usersCollection = client.db('laptopDeals').collection('users');
+        const addProductCollection = client.db('laptopDeals').collection('addProduct');
+
+        const verifyAdmin = async (req, res, next) => {
+            console.log(req.decoded.email);
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await usersCollection.findOne(query);
+            if (user?.role !== 'admin') {
+                return res.status(403).send({ message: 'forbidden access' });
+            }
+            next();
+        }
 
 
         app.get('/category', async(req, res) =>{
@@ -105,6 +117,25 @@ async function run(){
                 return res.send({ accessToken: token });
             }
             res.status(403).send({ accessToken: '' });
+        });
+
+
+        app.get('/productCategory', async (req, res) => {
+            const query = {}
+            const result = await productCollection.find(query).project({ CategoryName: 1 }).toArray();
+            res.send(result);
+        });
+
+        app.get('/addproduct', async (req, res) => {
+            const query = {}
+            const products = await addProductCollection.find(query).toArray();
+            res.send(products);
+        })
+
+        app.post('/addproduct', verifyJWT, async (req, res) => {
+            const product = req.body;
+            const result = await addProductCollection.insertOne(product);
+            res.send(result);
         });
         
     }
